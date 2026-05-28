@@ -1,7 +1,13 @@
 package cell.provider.utility;
 
-import cell.zone.Zone;
+public class InternetHub extends UtilityProvider {
 
-public class InternetHub {
+    public InternetHub(int row, int col) {
+        super(row, col, 'T');
+    }
 
+    @Override
+    public String getUtilityType() {
+        return "internet";
+    }
 }
