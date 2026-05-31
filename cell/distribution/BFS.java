@@ -5,6 +5,7 @@ import cell.Connectable;
 import cell.provider.utility.UtilityProvider;
 import cell.zone.Zone;
 import map.CityMap;
+import cell.zone.IndustrialZone;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -53,10 +54,14 @@ public class BFS {
             if (currentCell instanceof Zone) {
                 Zone zone = (Zone) currentCell;
 
-                int requestedAmount = zone.getUtilityDemand();
-                int givenAmount = provider.provideUtility(requestedAmount);
+                if (provider.getUtilityType().equals("internet") && zone instanceof IndustrialZone) {
+                    //IndustrialZone does not use the internet so capacity is not spent.
+                } else {
+                    int requestedAmount = zone.getUtilityDemand();
+                    int givenAmount = provider.provideUtility(requestedAmount);
 
-                giveUtilityToZone(zone, provider.getUtilityType(), givenAmount);
+                    giveUtilityToZone(zone, provider.getUtilityType(), givenAmount);
+                }
             }
 
 
@@ -91,4 +96,3 @@ public class BFS {
         }
     }
 }
-
