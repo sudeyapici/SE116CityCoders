@@ -1,26 +1,23 @@
-package cell.distribution;
+package distribution;
 
 import cell.Cell;
 import cell.Connectable;
 import cell.provider.utility.UtilityProvider;
+import cell.zone.IndustrialZone;
 import cell.zone.Zone;
 import map.CityMap;
-import cell.zone.IndustrialZone;
+import simulation.OutputPrinter;
 
 import java.util.LinkedList;
 import java.util.Queue;
 
 public class BFS {
 
-    // 4 Directions right left up down
     private static final int[] ROW_DIRECTIONS = {-1, 1, 0, 0};
     private static final int[] COL_DIRECTIONS = {0, 0, -1, 1};
 
-    // Utility distribution is done with BFS.Only Connectable cells are passed.
-    // Since Road and Zone are connectible, utility can proceed from them.
-    // Since EmptyCell is not connectible, utility cannot pass through there.
-
-    public void distributeUtility(CityMap cityMap, UtilityProvider provider) {
+    public void distributeUtility(CityMap cityMap, UtilityProvider provider,
+                                  OutputPrinter outputPrinter) {
         boolean[][] visited = new boolean[cityMap.getRows()][cityMap.getCols()];
         Queue<Cell> queue = new LinkedList<>();
 
@@ -28,8 +25,6 @@ public class BFS {
         int providerCol = provider.getCol();
 
         visited[providerRow][providerCol] = true;
-
-        // We add Provider's 4 neighbors to the queue as the starting point.
 
         for (int i = 0; i < ROW_DIRECTIONS.length; i++) {
             int newRow = providerRow + ROW_DIRECTIONS[i];
@@ -40,30 +35,29 @@ public class BFS {
 
                 if (neighbor instanceof Connectable) {
                     visited[newRow][newCol] = true;
-                    queue.add(neighbor); // // The distribution continues until the queue is empty or the capacity of the provider is finished.
-
+                    queue.add(neighbor);
                 }
             }
         }
 
-        // The distribution continues until the queue is empty or the capacity of the provider is finished.
         while (!queue.isEmpty() && provider.getCapacity() > 0) {
             Cell currentCell = queue.poll();
-
 
             if (currentCell instanceof Zone) {
                 Zone zone = (Zone) currentCell;
 
-                if (provider.getUtilityType().equals("internet") && zone instanceof IndustrialZone) {
-                    //IndustrialZone does not use the internet so capacity is not spent.
-                } else {
-                    int requestedAmount = zone.getUtilityDemand();
-                    int givenAmount = provider.provideUtility(requestedAmount);
+                if (!shouldSkipUtility(zone, provider.getUtilityType())) {
+                    int requestedAmount = zone.getUtilityDemand()
+                            - alreadyReceived(zone, provider.getUtilityType());
 
-                    giveUtilityToZone(zone, provider.getUtilityType(), givenAmount);
+                    if (requestedAmount > 0) {
+                        int givenAmount = provider.provideUtility(requestedAmount);
+
+                        giveUtilityToZone(zone, provider.getUtilityType(), givenAmount);
+                        outputPrinter.printUtilityReceived(zone, provider.getUtilityType(), givenAmount);
+                    }
                 }
             }
-
 
             for (int i = 0; i < ROW_DIRECTIONS.length; i++) {
                 int newRow = currentCell.getRow() + ROW_DIRECTIONS[i];
@@ -72,7 +66,6 @@ public class BFS {
                 if (cityMap.isInside(newRow, newCol) && !visited[newRow][newCol]) {
                     Cell neighbor = cityMap.getCell(newRow, newCol);
 
-                    // Only cells that are Connectable are included in BFS.
                     if (neighbor instanceof Connectable) {
                         visited[newRow][newCol] = true;
                         queue.add(neighbor);
@@ -82,9 +75,21 @@ public class BFS {
         }
     }
 
-    // electricity -> receiveElectricity
-    // water -> receiveWater
-    // internet -> receiveInternet
+    private boolean shouldSkipUtility(Zone zone, String utilityType) {
+        return utilityType.equals("internet") && zone instanceof IndustrialZone;
+    }
+
+    private int alreadyReceived(Zone zone, String utilityType) {
+        if (utilityType.equals("electricity")) {
+            return zone.getReceivedElectricity();
+        } else if (utilityType.equals("water")) {
+            return zone.getReceivedWater();
+        } else if (utilityType.equals("internet")) {
+            return zone.getReceivedInternet();
+        }
+
+        return 0;
+    }
 
     private void giveUtilityToZone(Zone zone, String utilityType, int amount) {
         if (utilityType.equals("electricity")) {
