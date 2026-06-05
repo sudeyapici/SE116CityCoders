@@ -30,10 +30,20 @@ public class IndustrialZone extends Zone {
         this.producedGoods = 0;
     }
 
+    @Override
+    public void calculateMinimumUtility() {
+        setMinimumUtility(Math.min(getReceivedWater(), getReceivedElectricity()));
+    }
+
+    @Override
+    protected boolean hasRequiredUtilities() {
+        return getReceivedElectricity() >= getUtilityDemand()
+                && getReceivedWater() >= getUtilityDemand();
+    }
 
     @Override
     public void updateLevel() {
-        if (getReceivedElectricity() == 0 || getReceivedWater() == 0 || receivedPopulation == 0) {
+        if (!hasRequiredUtilities() || receivedPopulation == 0) {
             setLevel(0);
         } else {
             int targetLevel = 1;
