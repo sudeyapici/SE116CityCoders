@@ -30,8 +30,15 @@ public class HousingZone extends Zone {
     }
 
     @Override
+    protected boolean hasRequiredUtilities() {
+        return getReceivedElectricity() >= getUtilityDemand()
+                && getReceivedWater() >= getUtilityDemand()
+                && getReceivedInternet() >= getUtilityDemand();
+    }
+
+    @Override
     public void updateLevel() {
-        if (getReceivedElectricity() == 0 || getReceivedWater() == 0 || getReceivedInternet() == 0) {
+        if (!hasRequiredUtilities()) {
             setLevel(0);
         } else {
             int targetLevel = 1;
