@@ -14,8 +14,6 @@ public abstract class Zone extends Cell implements Connectable {
     private boolean hasHealth;
     private boolean hasEducation;
 
-
-
     public Zone(int row, int col, char symbol) {
         super(row, col, symbol);
         this.level = 0;
@@ -69,6 +67,10 @@ public abstract class Zone extends Cell implements Connectable {
         this.level = level;
     }
 
+    public void setMinimumUtility(int minimumUtility) {
+        this.minimumUtility = minimumUtility;
+    }
+
     public void setUtilityDemand(int utilityDemand) {
         this.utilityDemand = Math.max(1, utilityDemand);
     }
@@ -99,7 +101,10 @@ public abstract class Zone extends Cell implements Connectable {
     }
 
     public void calculateMinimumUtility() {
-        this.minimumUtility = Math.min(receivedElectricity, Math.min(receivedWater, receivedInternet));
+        this.minimumUtility = Math.min(
+                receivedElectricity,
+                Math.min(receivedWater, receivedInternet)
+        );
     }
 
     // Clears tick-based received values before/after a simulation tick.
@@ -113,6 +118,7 @@ public abstract class Zone extends Cell implements Connectable {
         this.hasEducation = false;
     }
 
+    protected abstract boolean hasRequiredUtilities();
 
     // Each zone type has different level rules.
     public abstract void updateLevel();
